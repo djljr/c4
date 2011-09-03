@@ -1,0 +1,5 @@
+Requires simple-build-tool (xsbt): https://github.com/harrah/xsbt
+
+Running:
+  sbt
+  jetty-run
