@@ -1,8 +1,8 @@
-organization := "com.example"
+organization := "com.dl"
 
-name := "scalatra-sbt-prototype"
+name := "C4"
 
-version := "0.1.0-SNAPSHOT"
+version := "1.0"
 
 scalaVersion := "2.9.0-1"
 
