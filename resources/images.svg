@@ -15,7 +15,7 @@
    version="1.1"
    inkscape:version="0.48.1 r9760"
    style="enable-background:new"
-   sodipodi:docname="New document 1">
+   sodipodi:docname="images.svg">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -29,7 +29,7 @@
      inkscape:cx="189.55016"
      inkscape:cy="4.4065432"
      inkscape:document-units="px"
-     inkscape:current-layer="layer4"
+     inkscape:current-layer="layer2"
      showgrid="false"
      width="800px"
      showguides="true"
@@ -66,23 +66,18 @@
      inkscape:label="Red"
      style="display:inline"
      transform="translate(0,-423)">
-    <rect
-       style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       id="rect2996"
-       width="79.823227"
-       height="56.646446"
-       x="0.17677669"
-       y="423" />
     <path
-       sodipodi:type="arc"
-       style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       id="path3018"
-       sodipodi:cx="28.549437"
-       sodipodi:cy="451.23483"
-       sodipodi:rx="28.549437"
-       sodipodi:ry="28.234835"
-       d="m 57.098873,451.23483 c 0,15.59367 -12.782018,28.23484 -28.549436,28.23484 C 12.782018,479.46967 0,466.8285 0,451.23483 0,435.64116 12.782018,423 28.549437,423 c 15.767418,0 28.549436,12.64116 28.549436,28.23483 z"
-       transform="matrix(0.98099235,0,0,0.99192289,11.993221,3.9098574)" />
+       style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       mask="none"
+       d="M 0.1875 0 L 0.1875 56.65625 L 80 56.65625 L 80 0 L 0.1875 0 z M 40 0.5 C 55.467717 0.5 68 13.032283 68 28.5 C 68 43.967717 55.467717 56.5 40 56.5 C 24.532283 56.5 12 43.967717 12 28.5 C 12 13.032283 24.532283 0.5 40 0.5 z "
+       transform="translate(0,423)"
+       id="rect2996" />
+    <path
+       style="fill:none"
+       d="M 35.836053,55.507688 C 18.897754,52.410472 8.8497192,35.824687 14.193671,19.783702 16.547354,12.71863 22.520884,6.2697672 29.355117,3.4158091 c 13.389986,-5.5916238 28.597081,0.062941 34.986102,13.0091359 2.23777,4.534435 2.801893,6.94803 2.809604,12.020815 0.0051,3.332895 -0.161755,4.83333 -0.777959,6.997348 -2.699946,9.481765 -9.835619,16.680466 -19.172977,19.342334 -2.945476,0.839689 -8.71587,1.206437 -11.363834,0.722246 l 0,0 z"
+       id="path3851"
+       inkscape:connector-curvature="0"
+       transform="translate(0,423)" />
   </g>
   <g
      inkscape:groupmode="layer"
