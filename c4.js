@@ -19,6 +19,41 @@ var boardPos = [];
 var nextTurn;
 var turn = P1;
 
+var initBoard = function(defaultValueCallback) {
+    board = [];
+    for(var i=0; i<COLS; i++) {
+        board[i] = [];
+        for(var j=0; j<ROWS; j++) {
+            board[i][j] = defaultValueCallback(i, j);
+        }
+    }
+    return board;
+};
+
+var checkWin = function() {
+    var boardCheck = initBoard(function() { return {}; });
+    
+    for(var i=0; i<COLS; i++) {
+        for(var j=0; j<ROWS; j++) {
+            if(boardPos[i][j] != EMPTY) {
+                boardCheck[i][j] = {cols:1, rows:1, diag:1};
+                if(i>0 && boardPos[i][j] == boardPos[i-1][j]) { boardCheck[i][j].cols = boardCheck[i-1][j].cols + 1; }
+                if(j>0 && boardPos[i][j] == boardPos[i][j-1]) { boardCheck[i][j].rows = boardCheck[i][j-1].rows + 1; }
+                if(i>0 && j>0 && boardPos[i][j] == boardPos[i-1][j-1]) { boardCheck[i][j].diag = boardCheck[i-1][j-1].diag + 1; }
+            }
+            else {
+                boardCheck[i][j] = {cols:0, rows:0, diag:0};
+            }
+            
+            for(var dir in boardCheck[i][j]) {
+                if(boardCheck[i][j][dir] == 4) { return true; }
+            }
+        }
+    }
+    
+    return false;
+};
+
 var advanceTurn = function(currentTurn) {
     if(currentTurn == P1) { return P2; }
     else if(currentTurn == P2) { return P1; }
@@ -71,6 +106,9 @@ var dropPiece = function($, col, board, piece) {
         else {
             currentSprite.css("top", bottomOfCol);
             turn = nextTurn;
+            if(checkWin()) {
+                alert("win!");
+            }
             return true;
         }
         
@@ -78,12 +116,8 @@ var dropPiece = function($, col, board, piece) {
 };
 
 var init = function($) {
-    for(var i=0; i<COLS; i++) {
-        boardPos[i] = [];
-        for(var j=0; j<ROWS; j++) {
-            boardPos[i][j] = EMPTY;
-        }
-    }
+    boardPos = initBoard(function() { return EMPTY; });
+
     var boardSquare = new $.gameQuery.Animation({ imageURL: "images/sprites.png",
                                             numberOfFrame: 1,
                                             type: $.gameQuery.ANIMATION_ONCE,
@@ -101,14 +135,12 @@ var init = function($) {
                                             type: $.gameQuery.ANIMATION_ONCE,
                                             offsetx: 160,
                                             offsety: 0});
-                                            
+    
     $("#gameboard").playground({height: HEIGHT, width: WIDTH})
         .addGroup("pieceSprites", {height: HEIGHT, width: WIDTH}).end()
         .addGroup("boardsquares", {height: HEIGHT, width: WIDTH});
-    
-
-    
-    var boardSprite = $("#boardsquares");
+        
+    var boardSprite = $("#boardsquares");    
     var pieceSprites = $("#pieceSprites");
     
     for(var i = 0; i < ROWS; i++) {
@@ -121,6 +153,7 @@ var init = function($) {
                         posx: j * spriteWidth, 
                         posy: i * spriteHeight
             });
+
             $("#" + currentSquare).click(function(e) {
                 var rowcol = e.target.id.split("x");
                 if(turn == P1) {
