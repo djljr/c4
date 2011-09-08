@@ -1,5 +1,10 @@
-Requires simple-build-tool (xsbt): https://github.com/harrah/xsbt
+Requires node package manager: http://npmjs.org/
 
-Running:
-  sbt
-  jetty-run
+once that is installed you should be able to do:
+npm install -d
+
+then
+node app.js
+
+and browse to
+localhost:3000
