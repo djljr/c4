@@ -1,5 +1,9 @@
+Get and install node.js: http://nodejs.org/#download
+
+clone the repository.
+
 Running:
 $ node app.js
 
-and browse to
+Browse to:
 http://localhost:3000
