@@ -1,10 +1,5 @@
-Requires node package manager: http://npmjs.org/
-
-once that is installed you should be able to do:
-npm install -d
-
-then
-node app.js
+Running:
+$ node app.js
 
 and browse to
-localhost:3000
+http://localhost:3000
