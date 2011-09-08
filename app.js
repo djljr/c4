@@ -49,9 +49,11 @@ var startGame = function() {
 };
 
 io.sockets.on('connection', function(socket) {
+
     socket.on('join', function(data) {
         console.log('join: ' + data);
     });
+    
     socket.on('available', function(data) {
         var openSpot = (currentPlayers < 2);
         var msg;
@@ -64,6 +66,7 @@ io.sockets.on('connection', function(socket) {
         
         socket.emit('available', { hasOpenSpot: openSpot, msg: msg });
     });
+    
     socket.on('join', function(data) {
         if(player1Socket === undefined) {
             player1Socket = socket;
@@ -82,6 +85,7 @@ io.sockets.on('connection', function(socket) {
             startGame();
         }
     });
+    
     socket.on('move', function(data) {
         if(socket == player1Socket && turnIdx == 2) {
             socket.emit('error', {msg: "Not your turn."});
@@ -90,13 +94,44 @@ io.sockets.on('connection', function(socket) {
             socket.emit('error', {msg: "Not your turn."});
         }
         turnIdx = (turnIdx % 2) + 1;
-        player1Socket.emit('move', {col: data.col, nextTurn: turnIdx});
-        player2Socket.emit('move', {col: data.col, nextTurn: turnIdx});        
+        var p1Msg;
+        var p2Msg;
+        if(turnIdx == 1) {
+            p1Msg = "Your turn.";
+            p2Msg = "Opponent is moving.";
+        }
+        else if(turnIdx == 2) {
+            p1Msg = "Opponent is moving.";
+            p2Msg = "Your turn.";
+        }
+        player1Socket.emit('move', {col: data.col, nextTurn: turnIdx, msg: p1Msg});
+        player2Socket.emit('move', {col: data.col, nextTurn: turnIdx, msg: p2Msg});
     });
+    
     socket.on('iwin', function(data) {
+        if(player1Socket === undefined || player2Socket === undefined) {
+            return;
+        }
         console.log(socket + " thinks they won");
-        player1Socket.emit("win", {msg: "you win!"});
-        player2Socket.emit("lose", {msg: "you lose"});
+        var winnerSocket;
+        var loserSocket;
+        if(socket == player1Socket) {
+            winnerSocket = player1Socket;
+            loserSocket = player2Socket;
+        }
+        else if(socket == player2Socket) {
+            winnerSocket = player2Socket;
+            loserSocket = player1Socket;
+        }
+
+        if(winnerSocket && loserSocket) {
+            winnerSocket.emit("win", {msg: "You win! Refresh to start a new game."});
+            loserSocket.emit("lose", {msg: "You lose. Refresh to start a new game."});
+        }
+        
+        player1Socket = undefined;
+        player2Socket = undefined; 
+        currentPlayers = 0;       
     });
 });
 

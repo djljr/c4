@@ -49,8 +49,13 @@ var checkWin = function(socket) {
                 boardCheck[i][j] = {cols:0, rows:0, diag:0};
             }
             
-            for(var dir in boardCheck[i][j]) {
-                if(boardCheck[i][j][dir] == 4) { socket.emit('iwin'); return true; }
+            if(boardPos[i][j] == thisPlayer) {
+                for(var dir in boardCheck[i][j]) {
+                    if(boardCheck[i][j][dir] == 4) {
+                        socket.emit('iwin');
+                        return true; 
+                    }
+                }
             }
         }
     }
@@ -173,22 +178,23 @@ var init = function($) {
         turnIdx = data.currentTurn;
     });
     socket.on('move', function(data) {
+        msgDiv.text(data.msg); 
         if(turnIdx == P1) {
-            dropPiece($, data.col, pieceSprites, p1Piece);
+            dropPiece($, data.col, pieceSprites, p1Piece, P1);
         }
         else if(turnIdx == P2) {
-            dropPiece($, data.col, pieceSprites, p2Piece);
+            dropPiece($, data.col, pieceSprites, p2Piece, P2);
         }
         checkWin(socket);
         turnIdx = data.nextTurn;
     });
     socket.on('win', function(data) {
         gameOn = false;
-        msgDiv.text(data.msg);        
+        msgDiv.text(data.msg);
     });
     socket.on('lose', function(data) {
         gameOn = false;
-        msgDiv.text(data.msg);        
+        msgDiv.text(data.msg);      
     });
     
     for(var i = 0; i < ROWS; i++) {
