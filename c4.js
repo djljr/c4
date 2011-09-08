@@ -18,6 +18,10 @@ var P2 = 2;
 var boardPos = [];
 var nextTurn;
 var turn = P1;
+var gameOn = false;
+
+var turnIdx;
+var thisPlayer;
 
 var initBoard = function(defaultValueCallback) {
     board = [];
@@ -30,7 +34,7 @@ var initBoard = function(defaultValueCallback) {
     return board;
 };
 
-var checkWin = function() {
+var checkWin = function(socket) {
     var boardCheck = initBoard(function() { return {}; });
     
     for(var i=0; i<COLS; i++) {
@@ -46,7 +50,7 @@ var checkWin = function() {
             }
             
             for(var dir in boardCheck[i][j]) {
-                if(boardCheck[i][j][dir] == 4) { return true; }
+                if(boardCheck[i][j][dir] == 4) { socket.emit('iwin'); return true; }
             }
         }
     }
@@ -58,7 +62,7 @@ var advanceTurn = function(currentTurn) {
     if(currentTurn == P1) { return P2; }
     else if(currentTurn == P2) { return P1; }
 };
-var dropPiece = function($, col, board, piece) {
+var dropPiece = function($, col, board, piece, player) {
     col = parseInt(col);
     var sprite = board.addSprite("move" + moveNumber, {
                 animation: piece,
@@ -87,15 +91,13 @@ var dropPiece = function($, col, board, piece) {
         alert("Can't move");
         return;
     }
-    nextTurn = advanceTurn(turn);
-    boardPos[col][highestFilledRow-1] = turn;
+
+    boardPos[col][highestFilledRow-1] = player;
     
     //make the move
-    turn = EMPTY;
 
     var bottomOfCol = (highestFilledRow - 1) * spriteHeight;
             
-    turn = EMPTY;
     $.playground().registerCallback(function() {
         var currentSprite = $("#move" + curPieceId);
         var newTop = parseInt(currentSprite.css("top")) + pieceSpeed;
@@ -105,10 +107,6 @@ var dropPiece = function($, col, board, piece) {
         }
         else {
             currentSprite.css("top", bottomOfCol);
-            turn = nextTurn;
-            if(checkWin()) {
-                alert("win!");
-            }
             return true;
         }
         
@@ -143,6 +141,56 @@ var init = function($) {
     var boardSprite = $("#boardsquares");    
     var pieceSprites = $("#pieceSprites");
     
+    var joinButton = $("<button></button>");
+    joinButton.click(function() { 
+        socket.emit('join');
+    });
+    joinButton.text("Join Game");
+    
+    
+    var msgDiv = $("<div></div>");
+    $("#controls").append(msgDiv);
+    
+    var socket = io.connect('/');
+    
+    socket.on('available', function(data) {
+        if(data.hasOpenSpot) {
+            $("#controls").append(joinButton);
+        }
+        msgDiv.text(data.msg);         
+    });
+    socket.on('error', function(error) {
+        msgDiv.text(error.msg);
+    });
+    socket.on('standby', function(data) {
+        thisPlayer = data.playerIdx;
+        joinButton.hide();
+        msgDiv.text(data.msg);
+    });
+    socket.on('begin', function(data) {
+        gameOn = true;
+        msgDiv.text(data.msg); 
+        turnIdx = data.currentTurn;
+    });
+    socket.on('move', function(data) {
+        if(turnIdx == P1) {
+            dropPiece($, data.col, pieceSprites, p1Piece);
+        }
+        else if(turnIdx == P2) {
+            dropPiece($, data.col, pieceSprites, p2Piece);
+        }
+        checkWin(socket);
+        turnIdx = data.nextTurn;
+    });
+    socket.on('win', function(data) {
+        gameOn = false;
+        msgDiv.text(data.msg);        
+    });
+    socket.on('lose', function(data) {
+        gameOn = false;
+        msgDiv.text(data.msg);        
+    });
+    
     for(var i = 0; i < ROWS; i++) {
         for(var j = 0; j < COLS; j++) {
             var currentSquare = i + "x" + j;
@@ -156,18 +204,15 @@ var init = function($) {
 
             $("#" + currentSquare).click(function(e) {
                 var rowcol = e.target.id.split("x");
-                if(turn == P1) {
-                    dropPiece($, rowcol[1], pieceSprites, p1Piece);
-                }
-                else if(turn == P2) {
-                    dropPiece($, rowcol[1], pieceSprites, p2Piece);
+                if(turnIdx == thisPlayer) {
+                    socket.emit('move', { col: parseInt(rowcol[1]) });
                 }
             });
         }
     }
 
     $.playground().startGame();
-    
+    socket.emit('available');
 };
 
 jQuery(document).ready(init);
