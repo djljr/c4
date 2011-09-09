@@ -42,9 +42,9 @@ var startGame = function(socket, rows, cols, board) {
                         posy: i * spriteHeight
             });
             
-            if(board[i][j] != EMPTY) {
+            if(board[j][i] != EMPTY) {
                 ui.pieceLayer.addSprite(currentSquare + '-piece', {
-                        animation: pieceForPlayer(board[i][j]),
+                        animation: pieceForPlayer(board[j][i]),
                         width: spriteWidth,
                         height: spriteHeight,
                         posx: j * spriteWidth,
