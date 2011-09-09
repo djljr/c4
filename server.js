@@ -44,14 +44,16 @@ app.get('/c4.js', function(req, res){
 });
 
 // Application
+var ROWS = 6;
+var COLS = 7;
 
 var player1Socket;
 var player2Socket;
 var currentPlayers = 0;
 var turnIdx = 1;
 
-spectators = []
-var gameOn = false;
+var spectators = []
+var currentGame;
 
 var startGame = function() {
     console.log("starting game");
@@ -61,7 +63,8 @@ var startGame = function() {
     for(var i=0; i<spectators.length; i++) {
         spectators[i].emit('begin', {msg: 'Player 1 to move', currentTurn: turnIdx});
     }
-    gameOn = true;
+    
+    currentGame = c4engine.newGame(ROWS, COLS);
 };
 
 io.sockets.on('connection', function(socket) {
