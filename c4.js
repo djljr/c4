@@ -19,6 +19,7 @@ var boardPos = [];
 var nextTurn;
 var turn = P1;
 var gameOn = false;
+var spectate = false;
 
 var turnIdx;
 var thisPlayer;
@@ -35,6 +36,7 @@ var initBoard = function(defaultValueCallback) {
 };
 
 var checkWin = function(socket) {
+    if(spectator) { return false; }
     var boardCheck = initBoard(function() { return {}; });
     
     for(var i=0; i<COLS; i++) {
@@ -161,6 +163,10 @@ var init = function($) {
     socket.on('available', function(data) {
         if(data.hasOpenSpot) {
             $("#controls").append(joinButton);
+            spectator = false;
+        }
+        else {
+            spectator = true;
         }
         msgDiv.text(data.msg);         
     });
@@ -210,7 +216,7 @@ var init = function($) {
 
             $("#" + currentSquare).click(function(e) {
                 var rowcol = e.target.id.split("x");
-                if(turnIdx == thisPlayer) {
+                if(!spectator && turnIdx == thisPlayer) {
                     socket.emit('move', { col: parseInt(rowcol[1]) });
                 }
             });
