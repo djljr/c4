@@ -14,40 +14,62 @@ var P2 = 2;
 var game = { spectator: false, gameOn: false, turnIdx: 0, thisPlayer: 0 };
 var ui = {};
 
-var startGame(socket, rows, cols) {
+var pieceForPlayer = function(player) {
+    if(player == P1) {
+        return ui.p1Piece;
+    }
+    if(player == P2) {
+        return ui.p2Piece;
+    }
+}
+
+var clickFnFor = function(socket, col) {
+    return function(e) {
+        if(!game.spectator && game.turnIdx == game.thisPlayer) {
+            socket.emit('move', { col: col });
+        }
+    }
+}
+var startGame = function(socket, rows, cols, board) {
     for(var i = 0; i < rows; i++) {
         for(var j = 0; j < cols; j++) {
             var currentSquare = i + "x" + j;
-            ui.boardSprite.addSprite(currentSquare, {
+            ui.boardLayer.addSprite(currentSquare, {
                         animation: ui.boardSquare, 
                         width: spriteWidth, 
                         height: spriteHeight, 
                         posx: j * spriteWidth, 
                         posy: i * spriteHeight
             });
+            
+            if(board[i][j] != EMPTY) {
+                ui.pieceLayer.addSprite(currentSquare + '-piece', {
+                        animation: pieceForPlayer(board[i][j]),
+                        width: spriteWidth,
+                        height: spriteHeight,
+                        posx: j * spriteWidth,
+                        posy: i * spriteHeight
+                });
+            }
 
-            $("#" + currentSquare).click(function(e) {
-                if(!spectator && turnIdx == thisPlayer) {
-                    socket.emit('move', { col: j });
-                }
-            });
+            $("#" + currentSquare).click(clickFnFor(socket, j));
         }
     }
 
     $.playground().startGame();
 };
 
-var dropPiece = function($, col, layer, piece, player) {
-    col = parseInt(col);
-    var sprite = layer.addSprite("move" + moveNumber, {
+var dropPiece = function($, move) {
+    var piece = pieceForPlayer(move.player);
+    var curPieceId = move.moves;
+    var sprite = ui.pieceLayer.addSprite("move" + curPieceId, {
                 animation: piece,
                 width: spriteWidth,
                 height: spriteHeight,
-                posx: col * spriteWidth,
+                posx: move.col * spriteWidth,
                 posy: 0 
     });
-    var curPieceId = moveNumber;
-    var bottomOfCol = (highestFilledRow - 1) * spriteHeight;
+    var bottomOfCol = move.row * spriteHeight;
             
     $.playground().registerCallback(function() {
         var currentSprite = $("#move" + curPieceId);
@@ -96,7 +118,7 @@ var init = function($) {
         socket.emit('join');
     });
     ui.joinButton.text("Join Game");
-    
+    $("#controls").append(ui.joinButton);
     
     ui.msgDiv = $("<div></div>");
     $("#controls").append(ui.msgDiv);
@@ -106,11 +128,12 @@ var init = function($) {
     
     socket.on('available', function(data) {
         if(data.hasOpenSpot) {
-            $("#controls").append(joinButton);
             game.spectator = false;
+            ui.joinButton.show();
         }
         else {
             game.spectator = true;
+            ui.joinButton.hide();            
         }
         ui.msgDiv.text(data.msg);         
     });
@@ -118,33 +141,30 @@ var init = function($) {
         ui.msgDiv.text(error.msg);
     });
     socket.on('standby', function(data) {
-        thisPlayer = data.playerIdx;
+        game.thisPlayer = data.playerIdx;
         ui.joinButton.hide();
         ui.msgDiv.text(data.msg);
     });
     socket.on('begin', function(data) {
         game.gameOn = true;
         ui.msgDiv.text(data.msg); 
-        turnIdx = data.currentTurn;
-        startGame(socket, data.game.rows, data.game.cols)
+        game.turnIdx = data.game.currentTurn;
+        startGame(socket, data.game.rows, data.game.cols, data.game.board)
     });
     socket.on('move', function(data) {
         ui.msgDiv.text(data.msg); 
-        if(turnIdx == P1) {
-            dropPiece($, data.col, ui.pieceLayer, ui.p1Piece, P1);
-        }
-        else if(turnIdx == P2) {
-            dropPiece($, data.col, ui.pieceLayer, ui.p2Piece, P2);
-        }
-        turnIdx = data.nextTurn;
+        dropPiece($, data.game.lastMove);
+        game.turnIdx = data.game.currentTurn;
     });
     socket.on('win', function(data) {
         game.gameOn = false;
         ui.msgDiv.text(data.msg);
+        ui.joinButton.show();
     });
     socket.on('lose', function(data) {
         game.gameOn = false;
-        ui.msgDiv.text(data.msg);      
+        ui.msgDiv.text(data.msg);
+        ui.joinButton.show();
     });
     
     socket.emit('available');

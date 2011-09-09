@@ -57,14 +57,14 @@ var currentGame;
 
 var startGame = function() {
     console.log("starting game");
-    player1Socket.emit('begin', { msg: 'Game has started, you are player 1. Your turn.', currentTurn: turnIdx });
-    player2Socket.emit('begin', { msg: 'Game has started, you are player 2. Waiting for player 1.', currentTurn: turnIdx });
+    currentGame = c4engine.newGame(ROWS, COLS);
+    
+    player1Socket.emit('begin', { msg: 'Game has started, you are player 1. Your turn.', game: currentGame.gameState() });
+    player2Socket.emit('begin', { msg: 'Game has started, you are player 2. Waiting for player 1.', game: currentGame.gameState() });
     
     for(var i=0; i<spectators.length; i++) {
-        spectators[i].emit('begin', {msg: 'Player 1 to move', currentTurn: turnIdx});
+        spectators[i].emit('begin', { msg: 'Player 1 to move.', game: currentGame.gameState() });
     }
-    
-    currentGame = c4engine.newGame(ROWS, COLS);
 };
 
 io.sockets.on('connection', function(socket) {
@@ -78,6 +78,7 @@ io.sockets.on('connection', function(socket) {
             player2Socket = undefined;
         }
         else {
+            console.log('some guy left');
             spectators.splice(spectators.indexOf(socket), 1);
         }
     });
@@ -86,7 +87,7 @@ io.sockets.on('connection', function(socket) {
         var openSpot = (currentPlayers < 2);
         var msg;
         if(openSpot) {
-            msg = "Click Join to participate in the game"
+            msg = "Click Join to participate in the game";
         }
         else {
             msg = "Game is full, sorry";
@@ -95,8 +96,8 @@ io.sockets.on('connection', function(socket) {
         }
         
         socket.emit('available', { hasOpenSpot: openSpot, msg: msg });
-        if(gameOn) {
-            socket.emit('begin', {msg: 'Player ' + turnIdx + ' to move', currentTurn: turnIdx});
+        if(currentGame) {
+            socket.emit('begin', { msg: 'Player ' + currentGame.turn + ' to move.', game: currentGame.gameState() });
         }
     });
     
@@ -121,16 +122,17 @@ io.sockets.on('connection', function(socket) {
     });
     
     socket.on('move', function(data) {
-        if(socket == player1Socket && turnIdx == 2) {
+        if(socket == player1Socket && currentGame.turn == 2) {
             socket.emit('error', {msg: "Not your turn."});
         }
-        if(socket == player2Socket && turnIdx == 1) {
+        if(socket == player2Socket && currentGame.turn == 1) {
             socket.emit('error', {msg: "Not your turn."});
         }
         if(socket != player1Socket && socket != player2Socket) {
             return;
         }
-        turnIdx = (turnIdx % 2) + 1;
+        currentGame.move(data.col);
+        
         var p1Msg;
         var p2Msg;
         if(turnIdx == 1) {
@@ -143,15 +145,15 @@ io.sockets.on('connection', function(socket) {
             p2Msg = "Your turn.";
             spectatorMessage = "Player 2 to move."
         }
-        player1Socket.emit('move', {col: data.col, nextTurn: turnIdx, msg: p1Msg});
-        player2Socket.emit('move', {col: data.col, nextTurn: turnIdx, msg: p2Msg});
+        player1Socket.emit('move', { msg: p1Msg, game: currentGame.gameState() });
+        player2Socket.emit('move', { msg: p2Msg, game: currentGame.gameState() });
         
         for(var i=0; i<spectators.length; i++) {
-            spectators[i].emit('move', {col: data.col, nextTurn: turnIdx, msg: spectatorMessage});
+            spectators[i].emit('move', { msg: spectatorMessage, game: currentGame.gameState() });
         }
     });
     
-    socket.on('iwin', function(data) {
+    var win = function() {
         if(player1Socket === undefined || player2Socket === undefined) {
             return;
         }
@@ -175,7 +177,7 @@ io.sockets.on('connection', function(socket) {
         player1Socket = undefined;
         player2Socket = undefined; 
         currentPlayers = 0;       
-    });
+    };
 });
 
 app.listen(port);
