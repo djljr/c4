@@ -57,7 +57,13 @@ var currentGame;
 
 var getStateMessages = function() {
     var p1Msg; var p2Msg; var spectatorMsg;
-    if(currentGame.turn == currentGame.P1) {
+    console.log(currentGame.gameOver);
+    if(currentGame.gameOver) {
+        p1Msg = "Waiting for players.";
+        p2Msg = "Waiting for players.";
+        spectatorMsg = "Waiting for players.";        
+    }
+    else if(currentGame.turn == currentGame.P1) {
         p1Msg = "Your turn.";
         p2Msg = "Opponent is moving.";
         spectatorMsg = "Player 1 to move."
@@ -120,8 +126,8 @@ io.sockets.on('connection', function(socket) {
         clients.push(socket);
         if(currentGame) {
             spectators.push(socket);
-            console.log("new spectator");            
-            socket.emit('begin', { spectator: true, msg: 'Player ' + currentGame.turn + ' to move.', game: currentGame.gameState() });
+            var messages = getStateMessages();
+            socket.emit('begin', { spectator: true, msg: messages.spectatorMsg, game: currentGame.gameState() });
         }
     });
     
