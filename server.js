@@ -71,7 +71,7 @@ var getStateMessages = function() {
     return { p1Msg: p1Msg, p2Msg: p2Msg, spectatorMsg: spectatorMsg };
 };
 var startGame = function() {
-    if(!currentGame) {
+    if(!currentGame || currentGame.gameOver) {
         currentGame = c4engine.newGame(ROWS, COLS);
     }
     var messages = getStateMessages();
@@ -151,6 +151,9 @@ io.sockets.on('connection', function(socket) {
     });
     
     socket.on('move', function(data) {
+        if(!player1 || !player2) {
+            return;
+        }
         if(socket == player1.socket && currentGame.turn == 2) {
             socket.emit('error', {msg: "Not your turn."});
             return;
@@ -178,31 +181,43 @@ io.sockets.on('connection', function(socket) {
         for(var i=0; i<spectators.length; i++) {
             spectators[i].emit('move', { msg: messages.spectatorMsg, game: currentGame.gameState() });
         }
+        
+        if(currentGame.gameOver) {
+            win();
+        }
     });
     
     var win = function() {
-        if(player1Socket === undefined || player2Socket === undefined) {
+        console.log("we have a winner: " + currentGame.gameOver);
+        if(player1 === undefined || player2 === undefined) {
             return;
         }
-        console.log(socket + " thinks they won");
-        var winnerSocket;
-        var loserSocket;
-        if(socket == player1Socket) {
-            winnerSocket = player1Socket;
-            loserSocket = player2Socket;
-        }
-        else if(socket == player2Socket) {
-            winnerSocket = player2Socket;
-            loserSocket = player1Socket;
-        }
 
-        if(winnerSocket && loserSocket) {
-            winnerSocket.emit("win", {msg: "You win! Refresh to start a new game."});
-            loserSocket.emit("lose", {msg: "You lose. Refresh to start a new game."});
+        var winner;
+        var loser;
+        if(currentGame.gameOver == 1) {
+            winner = player1;
+            loser = player2;
+        }
+        else if(currentGame.gameOver == 2) {
+            winner = player2;
+            loser = player1;
         }
         
-        player1Socket = undefined;
-        player2Socket = undefined; 
+        console.log("winner: " + winner);
+        console.log("loser:  " + loser);
+        player1 = undefined;
+        player2 = undefined;
+        
+        var open = getOpenSlots();
+
+        if(winner && loser) {
+            winner.socket.emit("win", {msg: "You win!", open: open});
+            loser.socket.emit("lose", {msg: "You lose.", open: open});
+            for(var i=0; i<spectators.length; i++) {
+                spectators[i].emit("gameover", {msg: "Game over", open: open});
+            }
+        }
     };
 });
 

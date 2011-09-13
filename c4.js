@@ -21,7 +21,7 @@ var pieceForPlayer = function(player) {
     if(player == P2) {
         return ui.p2Piece;
     }
-}
+};
 
 var clickFnFor = function(socket, col) {
     return function(e) {
@@ -29,7 +29,8 @@ var clickFnFor = function(socket, col) {
             socket.emit('move', { col: col });
         }
     }
-}
+};
+
 var startGame = function(socket, rows, cols, board) {
     ui.boardLayer.empty();
     ui.pieceLayer.empty();
@@ -102,7 +103,8 @@ var showMsg = function(msg) {
     if(msg && msg != "") {
         ui.msgDiv.text(msg);
     }
-}
+};
+
 var init = function($) {
     // UI stuff
     ui.boardSquare = new $.gameQuery.Animation({ imageURL: "images/sprites.png",
@@ -201,12 +203,18 @@ var init = function($) {
     socket.on('win', function(data) {
         game.gameOn = false;
         showMsg(data.msg);
-        ui.joinButtonP1.show();
+        game.spectator = true;
+        showJoinButtons(data);
     });
     socket.on('lose', function(data) {
         game.gameOn = false;
         showMsg(data.msg);
-        ui.joinButtonP1.show();
+        game.spectator = true;
+        showJoinButtons(data);
+    });
+    socket.on('gameover', function(data) {
+        showMsg(data.msg);    
+        showJoinButtons(data);
     });
     
     socket.emit('available');
