@@ -54,7 +54,7 @@ var engine = {
     
     move: function(col) {
         row = engine.highestFilledRow(engine.board, col) - 1;
-        if(row > 0) {
+        if(row >= 0) {
             engine.moves = engine.moves + 1;
             engine.board[col][row] = engine.turn;
             engine.lastMove = { row: row, col: col, player: engine.turn, moves: engine.moves };

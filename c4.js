@@ -11,7 +11,7 @@ var EMPTY = 0;
 var P1 = 1;
 var P2 = 2;
 
-var game = { spectator: false, gameOn: false, turnIdx: 0, thisPlayer: 0 };
+var game = { spectator: true, gameOn: false, turnIdx: 0, thisPlayer: 0 };
 var ui = {};
 
 var pieceForPlayer = function(player) {
@@ -31,6 +31,8 @@ var clickFnFor = function(socket, col) {
     }
 }
 var startGame = function(socket, rows, cols, board) {
+    ui.boardLayer.empty();
+    ui.pieceLayer.empty();
     for(var i = 0; i < rows; i++) {
         for(var j = 0; j < cols; j++) {
             var currentSquare = i + "x" + j;
@@ -86,6 +88,21 @@ var dropPiece = function($, move) {
     }, REFRESH_RATE);
 };
 
+var joinButton = function(socket, player, text) {
+    var joinButton = $("<button></button>");
+    joinButton.click(function() { 
+        socket.emit('join', { player: player });
+    });
+    joinButton.text(text);
+
+    return joinButton;
+};
+
+var showMsg = function(msg) {
+    if(msg && msg != "") {
+        ui.msgDiv.text(msg);
+    }
+}
 var init = function($) {
     // UI stuff
     ui.boardSquare = new $.gameQuery.Animation({ imageURL: "images/sprites.png",
@@ -111,60 +128,85 @@ var init = function($) {
         .addGroup("boardsquares", {height: HEIGHT, width: WIDTH});
         
     ui.boardLayer = $("#boardsquares");    
-    ui.pieceLayer = $("#pieceSprites");
+    ui.pieceLayer = $("#pieceSprites");   
+
+    //functions
     
-    ui.joinButton = $("<button></button>");
-    ui.joinButton.click(function() { 
-        socket.emit('join');
-    });
-    ui.joinButton.text("Join Game");
-    $("#controls").append(ui.joinButton);
-    
+    var showJoinButtons = function(data) {
+        if(!game.spectator) {
+            ui.joinButtonP1.hide();
+            ui.joinButtonP2.hide();
+            return;
+        }
+        
+        if(data.open.player1) {
+            ui.joinButtonP1.show();        
+        }
+        else {
+            ui.joinButtonP1.hide(); 
+        }
+        
+        if(data.open.player2) {
+            ui.joinButtonP2.show();
+        }
+        else {
+            ui.joinButtonP2.hide();
+        }
+    };  
+        
+    //Communication stuff
+    var socket = io.connect('/');
+
+    ui.joinButtonP1 = joinButton(socket, 1, "Join as Player 1");
+    $("#controls").append(ui.joinButtonP1);
+
+    ui.joinButtonP2 = joinButton(socket, 2, "Join as Player 2");
+    $("#controls").append(ui.joinButtonP2);
+        
     ui.msgDiv = $("<div></div>");
     $("#controls").append(ui.msgDiv);
     
-    //Communication stuff
-    var socket = io.connect('/');
-    
     socket.on('available', function(data) {
-        if(data.hasOpenSpot) {
-            game.spectator = false;
-            ui.joinButton.show();
-        }
-        else {
-            game.spectator = true;
-            ui.joinButton.hide();            
-        }
-        ui.msgDiv.text(data.msg);         
+        showMsg(data.msg);
+        showJoinButtons(data);
+    });
+    socket.on('join', function(data) {
+        showJoinButtons(data);    
+    });
+    socket.on('leave', function(data) {
+        showMsg(data.msg);
+        showJoinButtons(data);
     });
     socket.on('error', function(error) {
-        ui.msgDiv.text(error.msg);
+        showMsg(error.msg);
     });
     socket.on('standby', function(data) {
         game.thisPlayer = data.playerIdx;
-        ui.joinButton.hide();
-        ui.msgDiv.text(data.msg);
+        game.spectator = false;
+        showJoinButtons(data);
+        showMsg(data.msg);
     });
     socket.on('begin', function(data) {
         game.gameOn = true;
-        ui.msgDiv.text(data.msg); 
+        game.spectator = data.spectator;
+        showMsg(data.msg); 
         game.turnIdx = data.game.currentTurn;
         startGame(socket, data.game.rows, data.game.cols, data.game.board)
     });
     socket.on('move', function(data) {
-        ui.msgDiv.text(data.msg); 
+        showMsg(data.msg); 
         dropPiece($, data.game.lastMove);
         game.turnIdx = data.game.currentTurn;
     });
     socket.on('win', function(data) {
         game.gameOn = false;
-        ui.msgDiv.text(data.msg);
-        ui.joinButton.show();
+        showMsg(data.msg);
+        ui.joinButtonP1.show();
     });
     socket.on('lose', function(data) {
         game.gameOn = false;
-        ui.msgDiv.text(data.msg);
-        ui.joinButton.show();
+        showMsg(data.msg);
+        ui.joinButtonP1.show();
     });
     
     socket.emit('available');
