@@ -9,7 +9,7 @@ var Engine = (function(io) {
             return board[j][i];
         }
         var makeMove = function(col) {
-            if(!game.spectator && game.turnIdx == game.thisPlayer) {
+            if(!Engine.game.spectator && Engine.game.turnIdx == Engine.game.thisPlayer) {
                 socket.emit('move', { col: col });
             }
         }
@@ -23,7 +23,7 @@ var Engine = (function(io) {
         game: { spectator: true, gameOn: false, turnIdx: 0, thisPlayer: 0 },
         init: function() {       
             var showJoinButtons = function(data) {
-                if(!this.game.spectator) { //only spectators are allowed to join
+                if(!Engine.game.spectator) { //only spectators are allowed to join
                     data.open.player1 = false;
                     data.open.player2 = false;
                 }
