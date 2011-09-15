@@ -88,10 +88,11 @@ var engine = {
         for(var i=0; i<engine.COLS; i++) {
             for(var j=0; j<engine.ROWS; j++) {
                 if(board[i][j] != engine.EMPTY) {
-                    boardCheck[i][j] = {cols:1, rows:1, diag:1};
+                    boardCheck[i][j] = {cols:1, rows:1, diag_l:1, diag_r:1};
                     if(i>0 && board[i][j] == board[i-1][j]) { boardCheck[i][j].cols = boardCheck[i-1][j].cols + 1; }
                     if(j>0 && board[i][j] == board[i][j-1]) { boardCheck[i][j].rows = boardCheck[i][j-1].rows + 1; }
-                    if(i>0 && j>0 && board[i][j] == board[i-1][j-1]) { boardCheck[i][j].diag = boardCheck[i-1][j-1].diag + 1; }
+                    if(i>0 && j>0 && board[i][j] == board[i-1][j-1]) { boardCheck[i][j].diag_l = boardCheck[i-1][j-1].diag_l + 1; }
+                    if(i>0 && j<engine.ROWS-1 && board[i][j] == board[i-1][j+1]) { boardCheck[i][j].diag_r = boardCheck[i-1][j+1].diag_r + 1; }
                     
                     for(var dir in boardCheck[i][j]) {
                         if(boardCheck[i][j][dir] == 4) {
@@ -100,7 +101,7 @@ var engine = {
                     }                
                 }
                 else {
-                    boardCheck[i][j] = {cols:0, rows:0, diag:0};
+                    boardCheck[i][j] = {cols:0, rows:0, diag_l:0, diag_r: 0};
                 }
             }
         }
