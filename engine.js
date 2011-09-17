@@ -41,6 +41,14 @@ var Utils = (function() {
     };
     
     return {
+        isLegalMove: function(board, col) {
+            if(board === undefined || 
+                board.length == 0 || 
+                board[col] === undefined ||
+                board[col].length == 0) 
+            { return false; }
+            return this.highestFilledRow(board, col) > 0;
+        },
         /* returns the lowest row index with a piece for given col */
         highestFilledRow: function(board, col) {
             var targetCol = board[col];

@@ -30,6 +30,14 @@ var UI = (function() {
         return joinButton;
     };
 
+    var aiButton = function(socket, baseUrl, text) {
+        var aiButton = $("<button></button>");
+        aiButton.click(function() {
+            socket.emit('ai', {player: 2, baseUrl: baseUrl});
+        });
+        aiButton.text(text);
+        return aiButton;
+    }
     /* 
      * return a function which will emit the correct 'move' message for <col> on <socket>
      */
@@ -157,9 +165,13 @@ var UI = (function() {
 
             ui.joinButtonP2 = joinButton(socket, 2, "Join as Player 2");
             $("#controls").append(ui.joinButtonP2);
-                
+           
+            ui.AIRandom = aiButton(socket, 'http://localhost:3000/ai/random/move', 'Random AI Opponent');
+            $("#controls").append(ui.AIRandom);
+            
             ui.msgDiv = $("<div></div>");
-            $("#controls").append(ui.msgDiv);                                                      
+            $("#controls").append(ui.msgDiv);
+           
         },
         
         showJoinButtons: function(data) {

@@ -27,6 +27,26 @@ module.exports = {
         var board = [[1,1,1]];
         assert.eql(0, Utils.highestFilledRow(board, 0));
     },
+
+    'no move on an empty board is legal': function() {
+        var board = [[]];
+        assert.eql(false, Utils.isLegalMove(board, 0));
+    },
+    
+    'move on an empty column is legal': function() {
+        var board = [[0,0,0]];
+        assert.eql(true, Utils.isLegalMove(board, 0));
+    },
+    
+    'move on a full column is illegal': function() {
+        var board = [[1,1,1]];
+        assert.eql(false, Utils.isLegalMove(board, 0));
+    },
+    
+    'move on an out of bounds column is illegal': function() {
+        var board = [[0,0,0]];
+        assert.eql(false, Utils.isLegalMove(board, 1));
+    },
     
     'Init board with size 0 returns []': function() {
         assert.eql([], Utils.initBoard(0,0));

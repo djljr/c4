@@ -5,8 +5,12 @@
 var express = require('express');
 var app = module.exports = express.createServer();
 var io = require('socket.io').listen(app);
+var http = require('http');
+var url = require('url');
 
 var c4engine = require('./engine');
+
+var randomAi = require('./random_ai');
 
 // Configuration
 
@@ -31,13 +35,108 @@ app.configure('production', function(){
     port = 80;
 });
 
-// Routes
+app.use(express.bodyParser());
 
+// Routes
 app.get('/', function(req, res){
     res.render('index', {
         title: 'Express'
     });
 });
+
+app.post('/ai/random/move', function(req, res) {
+    //TODO: res.end(randomAi.move(req.body));
+});
+
+// Classes
+var HumanPlayer = function(socket, playerIdx, moveCallback) {
+    this.socket = socket;
+    this.playerIdx = playerIdx;
+    this.moveCallback = moveCallback;
+};
+
+HumanPlayer.prototype.begin = function(msg, state) {
+    this.socket.emit('begin', { spectator: false, msg: msg[this.playerIdx], game: state });
+};
+
+HumanPlayer.prototype.error = function(msg) {
+    this.socket.emit('error', { msg: msg });
+};
+
+HumanPlayer.prototype.standby = function(open) {
+    this.socket.emit('standby', { msg: "You are player " + this.playerIdx + ", waiting for other player to join.", playerIdx: this.playerIdx, open: open });
+};
+
+HumanPlayer.prototype.join = function(player, open) {
+    this.socket.emit('join', {player: player, open: open});
+};
+
+HumanPlayer.prototype.move = function(msg, state) {
+    this.socket.emit('move', { msg: msg[1], game: state });
+};
+
+HumanPlayer.prototype.makeMove = function(col) {
+    this.moveCallback(col);
+};
+
+var Spectator = function(socket) { 
+    this.socket = socket;
+};
+
+Spectator.prototype.begin = function(msg, state) {
+    this.socket.emit('begin', { spectator: true, msg: msg.spectator, game: state });
+};
+
+Spectator.prototype.available = function(open) {
+    this.socket.emit('available', { open: open, msg: "Waiting for players" });
+};
+
+Spectator.prototype.join = function(player, open) {
+    this.socket.emit('join', {player: player, open: open});
+};
+
+Spectator.prototype.move = function(msg, state) {
+    this.socket.emit('move', { msg: msg.spectator, game: state });
+};
+
+var ComputerPlayer = function(moveUrl, playerIdx, moveCallback) {
+    this.playerIdx = playerIdx;
+    this.moveUrl = url.parse(moveUrl);
+    this.moveCallback = moveCallback;
+};
+
+ComputerPlayer.prototype.join = function() {};
+ComputerPlayer.prototype.begin = function() {};
+
+ComputerPlayer.prototype.move = function(msg, state) {
+    console.log('move!');
+    if(state.currentTurn == this.playerIdx) {
+        var mc = this.moveCallback;
+        var callback = function(move) {
+            mc(parseInt(move));
+        };
+
+        this.makeRequest(state, callback);
+    }
+};
+
+ComputerPlayer.prototype.makeRequest = function(state, callback) { 
+    var options = {
+        host: this.moveUrl.hostname,
+        port: this.moveUrl.port,
+        path: this.moveUrl.pathname,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        method: 'POST'
+    };
+    
+    var req = http.request(options, function(res) {
+        res.on('data', callback);
+    });
+    
+    req.end(JSON.stringify(state));
+};
 
 // Application
 var ROWS = 6;
@@ -45,7 +144,6 @@ var COLS = 7;
 
 var player1;
 var player2;
-var currentPlayers = 0;
 
 var spectators = []; //everyone but player1 and player2
 var clients = []; // all connected sockets
@@ -70,21 +168,17 @@ var getStateMessages = function() {
         spectatorMsg = "Player 2 to move."
     }
     
-    return { p1Msg: p1Msg, p2Msg: p2Msg, spectatorMsg: spectatorMsg };
+    return { 1: p1Msg, 2: p2Msg, spectator: spectatorMsg };
 };
+
 var startGame = function() {
     if(!currentGame || currentGame.gameOver) {
         currentGame = c4engine.newGame(ROWS, COLS);
     }
     var messages = getStateMessages();
-    player1.socket.emit('begin', { spectator: false, msg: messages.p1Msg, game: currentGame.gameState() });
-    player2.socket.emit('begin', { spectator: false, msg: messages.p2Msg, game: currentGame.gameState() });
-    
-    spectators = [];
+
     for(var i=0; i<clients.length; i++) {
-        if(clients[i] == player1.socket || clients[i] == player2.socket) { continue; }
-        spectators.push(clients[i]);
-        clients[i].emit('begin', { spectator: true, msg: messages.spectatorMsg, game: currentGame.gameState() });
+        clients[i].begin(messages, currentGame.gameState());
     }
     
 };
@@ -93,6 +187,71 @@ var getOpenSlots = function () {
     return { player1: (player1 === undefined), player2: (player2 === undefined) };
 };
 
+var indexBySocket =  function(list, socket) {
+    for(var i=0; i<list.length; i++) {
+        if(list[i].socket == socket) { 
+            return i;
+        }
+    }
+}
+
+var removeBySocket = function(list, socket) {
+    list.splice(indexBySocket(list, socket), 1);
+};
+
+var isMyTurn = function(socket) {
+    if(!player1 || !player2) {
+        return false;
+    }
+    
+    if(socket == player1.socket && currentGame.turn == 2) {
+        return false;
+    }
+    
+    if(socket == player2.socket && currentGame.turn == 1) {
+        return false;
+    }
+    
+    if(socket != player1.socket && socket != player2.socket) {
+        return false;
+    }
+    
+    return true;
+};
+
+var win = function() {
+    console.log("we have a winner: " + currentGame.gameOver);
+    if(player1 === undefined || player2 === undefined) {
+        return;
+    }
+
+    var winner;
+    var loser;
+    if(currentGame.gameOver == 1) {
+        winner = player1;
+        loser = player2;
+    }
+    else if(currentGame.gameOver == 2) {
+        winner = player2;
+        loser = player1;
+    }
+    
+    console.log("winner: " + winner);
+    console.log("loser:  " + loser);
+    player1 = undefined;
+    player2 = undefined;
+    
+    var open = getOpenSlots();
+
+    if(winner && loser) {
+        winner.socket.emit("win", {msg: "You win!", open: open});
+        loser.socket.emit("lose", {msg: "You lose.", open: open});
+        for(var i=0; i<spectators.length; i++) {
+            spectators[i].emit("gameover", {msg: "Game over", open: open});
+        }
+    }
+};
+    
 io.sockets.on('connection', function(socket) {
     socket.on('disconnect', function() {
         var msg = "";
@@ -108,119 +267,122 @@ io.sockets.on('connection', function(socket) {
             console.log('some guy left');
             spectators.splice(spectators.indexOf(socket), 1);
         }
-        clients.splice(clients.indexOf(socket), 1);
+        removeBySocket(clients, socket);
+        
         for(var i=0; i<clients.length; i++) {
             clients[i].emit('leave', {open: getOpenSlots(), msg: msg});
         }
     });
     
     socket.on('available', function(data) {
-        var open = getOpenSlots();
-        
-        socket.emit('available', { open: open, msg: "Waiting for players" });
-        
-        clients.push(socket);
+        var open = getOpenSlots();        
+        var spectator = new Spectator(socket)
+        spectator.available(open);
+        clients.push(spectator);
         if(currentGame) {
-            spectators.push(socket);
             var messages = getStateMessages();
-            socket.emit('begin', { spectator: true, msg: messages.spectatorMsg, game: currentGame.gameState() });
+            spectator.begin(messages, currentGame.gameState());
         }
     });
-    
-    socket.on('join', function(data) {
-        var open = getOpenSlots();
-        if(data.player == 1 && open.player1 == true) {
-            player1 = {socket: socket};
-            socket.emit('standby', { msg: "You are player 1, waiting for other player to join.", playerIdx: 1, open: open });
-        }
-        else if(data.player == 2 && open.player2 == true) {
-            player2 = {socket: socket};
-            socket.emit('standby', { msg: "You are player 2, waiting for other player to join.", playerIdx: 2, open: open });
-        }
-        else {
-            socket.emit('error', { msg: "Game is full, sorry." });
-            return;
-        }
+
+    var makeMove = function(player, col) {
+        if(player != currentGame.turn) { return; }
         
-        open = getOpenSlots();
-        for(var i = 0; i < clients.length; i++) {
-            if(clients[i] == socket) { continue; }
-            clients[i].emit('join', {player: data.player, open: open});
-        }
-        if(open.player1 == false && open.player2 == false) {
-            startGame();
-        }
-    });
-    
-    socket.on('move', function(data) {
-        if(!player1 || !player2) {
-            return;
-        }
-        if(socket == player1.socket && currentGame.turn == 2) {
-            socket.emit('error', {msg: "Not your turn."});
-            return;
-        }
-        else if(socket == player2.socket && currentGame.turn == 1) {
-            socket.emit('error', {msg: "Not your turn."});
-            return;
-        }
-        else if(socket != player1.socket && socket != player2.socket) {
-            return;
-        }
-        var open = getOpenSlots();
-        console.log(open);
-        if(open.player1 == true || open.player2 == true) {
-            socket.emit('error', {msg: "Not enough players."});
-            return;
-        }
-        currentGame.move(data.col);
+        currentGame.move(col);
         
         var messages = getStateMessages();
-
-        player1.socket.emit('move', { msg: messages.p1Msg, game: currentGame.gameState() });
-        player2.socket.emit('move', { msg: messages.p2Msg, game: currentGame.gameState() });
         
-        for(var i=0; i<spectators.length; i++) {
-            spectators[i].emit('move', { msg: messages.spectatorMsg, game: currentGame.gameState() });
+        for(var i=0; i<clients.length; i++) {
+            clients[i].move(messages, currentGame.gameState());
         }
         
         if(currentGame.gameOver) {
             win();
         }
-    });
+    }
+       
+    var moveCallback = function(player) {
+        return function(col) {
+            makeMove(player, col);
+        };
+    };
     
-    var win = function() {
-        console.log("we have a winner: " + currentGame.gameOver);
-        if(player1 === undefined || player2 === undefined) {
+    socket.on('ai', function(data) {
+        var open = getOpenSlots();
+        var computer;
+        if(data.player == 1 && open.player1) {
+            computer = player1 = new ComputerPlayer(data.baseUrl, 1, moveCallback(1));
+            open.player1 = false;
+        }
+        else if(data.player == 2 && open.player2) {
+            computer = player2 = new ComputerPlayer(data.baseUrl, 2, moveCallback(2));       
+            open.player2 = false;
+        }
+        else {
+            socket.emit('error', { msg: "Game is full, sorry." });
             return;
         }
 
-        var winner;
-        var loser;
-        if(currentGame.gameOver == 1) {
-            winner = player1;
-            loser = player2;
-        }
-        else if(currentGame.gameOver == 2) {
-            winner = player2;
-            loser = player1;
+        for(var i = 0; i < clients.length; i++) {
+            clients[i].join(data.player, open);
         }
         
-        console.log("winner: " + winner);
-        console.log("loser:  " + loser);
-        player1 = undefined;
-        player2 = undefined;
+        clients.push(computer);
+        console.log('ai message: ' + clients.length);
+        if(open.player1 == false && open.player2 == false) {
+            startGame();
+        }        
+    });
+    
+    socket.on('join', function(data) {
+        var open = getOpenSlots();
+        var player;
+        if(data.player == 1 && open.player1) {
+            player = player1 = new HumanPlayer(socket, 1, moveCallback(1));
+            open.player1 = false;
+        }
+        else if(data.player == 2 && open.player2) {
+            player = player2 = new HumanPlayer(socket, 2, moveCallback(2));
+            open.player2 = false;
+        }
+        else {
+            socket.emit('error', { msg: "Game is full, sorry." });
+            return;
+        }     
+        player.standby(open);
+        
+        removeBySocket(clients, socket)
+        //inform everyone else of the new contender
+        for(var i = 0; i < clients.length; i++) {
+            clients[i].join(data.player, open);
+        }
+        
+        clients.push(player);
+        console.log('join message: ' + clients.length);
+        if(!open.player1 && !open.player2) {
+            startGame();
+        }
+    });
+    
+    socket.on('move', function(data) {
+        if(!isMyTurn(socket)) {
+            socket.emit('error', {msg: "Not your turn."});
+            return;
+        }
         
         var open = getOpenSlots();
-
-        if(winner && loser) {
-            winner.socket.emit("win", {msg: "You win!", open: open});
-            loser.socket.emit("lose", {msg: "You lose.", open: open});
-            for(var i=0; i<spectators.length; i++) {
-                spectators[i].emit("gameover", {msg: "Game over", open: open});
-            }
+        if(open.player1 == true || open.player2 == true) {
+            socket.emit('error', {msg: "Not enough players."});
+            return;
         }
-    };
+        
+        console.log('numclients: ' + clients.length);
+        
+        var idx = indexBySocket(clients, socket);
+        console.log(idx);
+                
+        clients[idx].makeMove(data.col);
+    });
 });
 
 app.listen(port);
