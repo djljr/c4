@@ -111,7 +111,7 @@ var engine = {
         target = Utils.highestFilledRow(engine.board, col) - 1;
         if(target >= 0) {
             engine.moves = engine.moves + 1;
-            engine.board[col][row] = engine.turn;
+            engine.board[col][target] = engine.turn;
             engine.lastMove = { row: target, col: col, player: engine.turn, moves: engine.moves };
             engine._advanceTurn();
             var winner = Utils.checkWin(engine.board);
