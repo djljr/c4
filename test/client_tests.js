@@ -5,7 +5,7 @@ io = { connect: function() { return socket; } };
 UI = { messages: [], init: function() { }, showMsg: function(msg) { this.messages.push(msg); } };
 
 var assert = require('assert');
-var c4 = require('../c4');
+var c4 = require('../public/js/c4');
 
 var before = function() {
     c4.Engine.init();

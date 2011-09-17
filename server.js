@@ -39,10 +39,6 @@ app.get('/', function(req, res){
     });
 });
 
-app.get('/c4.js', function(req, res){
-    res.sendfile(__dirname + '/c4.js');
-});
-
 // Application
 var ROWS = 6;
 var COLS = 7;
