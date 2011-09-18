@@ -27,7 +27,6 @@ var Engine = (function(io) {
                     data.open.player1 = false;
                     data.open.player2 = false;
                 }
-                
                 UI.showJoinButtons(data);
             };
                 
@@ -43,7 +42,7 @@ var Engine = (function(io) {
                 showJoinButtons(data);    
             });
             socket.on('leave', function(data) {
-                UI.showMsg(data.msg);
+                //UI.showMsg(data.msg);
                 showJoinButtons(data);
             });
             socket.on('error', function(error) {

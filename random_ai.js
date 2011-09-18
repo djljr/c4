@@ -24,11 +24,6 @@ exports.moveDetail = function(state) {
         return board;
     };
     
-    var otherPlayer = function(player) {
-        if(player == 1) { return 2; }
-        if(player == 2) { return 1; }
-    };
-    
     var copyBoard = function(board) {
         var copy = [];
         for(var i=0; i<board.length; i++) {
@@ -54,7 +49,7 @@ exports.moveDetail = function(state) {
         }
         
         // see if the move 
-        var next = otherPlayer(state.currentTurn)
+        var next = Utils.otherPlayer(state.currentTurn)
         board = boardAfterMove(copyBoard(state.board), legalMoves[i], next);
         if(Utils.checkWin(board) == next) {
             block = legalMoves[i];

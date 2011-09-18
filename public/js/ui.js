@@ -37,7 +37,8 @@ var UI = (function() {
         });
         aiButton.text(text);
         return aiButton;
-    }
+    };
+    
     /* 
      * return a function which will emit the correct 'move' message for <col> on <socket>
      */
@@ -196,5 +197,5 @@ var UI = (function() {
                 ui.AIRandom2.hide();
             }    
         }
-    }
+    };
 })();

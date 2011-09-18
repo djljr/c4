@@ -41,6 +41,10 @@ var Utils = (function() {
     };
     
     return {
+        otherPlayer: function(player) {
+            if(player == engine.P1) { return engine.P2; }
+            if(player == engine.P2) { return engine.P1; }
+        },
         isLegalMove: function(board, col) {
             if(board === undefined || 
                 board.length == 0 || 
