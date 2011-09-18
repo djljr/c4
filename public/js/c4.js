@@ -5,8 +5,8 @@ var Engine = (function(io) {
     var P2 = 2;
 
     var startGame = function(socket, rows, cols, board) {
-        var boardQueryCallback = function(i, j) {
-            return board[j][i];
+        var boardQueryCallback = function(row, col) {
+            return board[col][row];
         }
         var makeMove = function(col) {
             if(!Engine.game.spectator && Engine.game.turnIdx == Engine.game.thisPlayer) {
@@ -15,7 +15,7 @@ var Engine = (function(io) {
         }
         UI.initBoard(rows, cols);
         UI.resetBoard(boardQueryCallback, makeMove);
-        UI.startGame();            
+        UI.startGame();        
     };
     
     return {
@@ -39,7 +39,7 @@ var Engine = (function(io) {
                 showJoinButtons(data);
             });
             socket.on('join', function(data) {
-                showJoinButtons(data);    
+                showJoinButtons(data);
             });
             socket.on('leave', function(data) {
                 //UI.showMsg(data.msg);
@@ -62,8 +62,10 @@ var Engine = (function(io) {
                 startGame(socket, data.game.rows, data.game.cols, data.game.board)
             });
             socket.on('move', function(data) {
-                UI.showMsg(data.msg); 
-                UI.dropPiece(data.game.lastMove);
+                UI.showMsg(data.msg);
+                if(data.game.lastMove) {
+                    UI.dropPiece(data.game.lastMove);
+                }
                 Engine.game.turnIdx = data.game.currentTurn;
             });
             socket.on('gameover', function(data) {

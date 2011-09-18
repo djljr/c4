@@ -10,8 +10,8 @@ var UI = (function() {
     
     var spriteWidth = 80;
     var spriteHeight = 57;
-    var REFRESH_RATE = 16;
-    var pieceSpeed = 20;
+    var REFRESH_RATE = 33;
+    var pieceVelocity = 18;
     
     //ui state    
     var ui = {};
@@ -116,12 +116,13 @@ var UI = (function() {
                         width: spriteWidth,
                         height: spriteHeight,
                         posx: move.col * spriteWidth,
-                        posy: 0 
+                        posy: -spriteHeight 
             });
             var bottomOfCol = move.row * spriteHeight;
-                    
+                
+            var currentSprite = $("#move" + curPieceId);
+            var start = new Date().getTime()
             $.playground().registerCallback(function() {
-                var currentSprite = $("#move" + curPieceId);
                 var newTop = parseInt(currentSprite.css("top")) + pieceSpeed;
                 if(newTop < bottomOfCol) {
                     currentSprite.css("top", newTop);
@@ -129,6 +130,9 @@ var UI = (function() {
                 }
                 else {
                     currentSprite.css("top", bottomOfCol);
+                    var end = (new Date().getTime() - start);
+                    
+                    console.log("animation finished in: " + end + "ms");
                     return true;
                 }
                 

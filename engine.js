@@ -153,6 +153,7 @@ var engine = {
         engine.COLS = cols;
         engine.moves = 0;
         engine.gameOver = false;
+        engine.lastMove = undefined;
         
         engine.board = Utils.initBoard(rows, cols, function() { return engine.EMPTY; });
         engine.turn = engine.P1;
