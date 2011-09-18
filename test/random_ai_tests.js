@@ -24,6 +24,6 @@ module.exports = {
     
     'AI will choose some legal square when there are no wins on the board with many legal moves': function() {
         var state = {board: [[1,2,1,2],[0,0,2,1],[0,1,1,2]], currentTurn: 2};
-        assert.includes([2,3], ai.move(state));
+        assert.includes([1,2], ai.move(state));
     },
 }

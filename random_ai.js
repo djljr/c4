@@ -3,6 +3,10 @@ var engine = require('./engine');
 var Utils = engine.Utils;
 
 exports.move = function(state) {
+    return exports.moveDetail(state).col;
+};
+
+exports.moveDetail = function(state) {
     var findLegalMoves = function(board) {
         var legalMoves = [];
         for(var col=0; col<board.length; col++) {
@@ -57,6 +61,17 @@ exports.move = function(state) {
         }
     }
     
-    var move = win || block || randomMove(legalMoves);
-    return move;
-};
+    var randomMove = randomMove(legalMoves);
+    var move;
+    if(win !== undefined) {
+        move = win;
+    }
+    else if(block !== undefined) {
+        move = block
+    }
+    else {
+        move = randomMove;
+    }
+    
+    return { col: move, win: win, block: block, rand: randomMove };
+}
