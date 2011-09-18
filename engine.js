@@ -53,6 +53,15 @@ var Utils = (function() {
             { return false; }
             return this.highestFilledRow(board, col) > 0;
         },
+        findLegalMoves: function(board) {
+            var legalMoves = [];
+            for(var col=0; col<board.length; col++) {
+                if(Utils.isLegalMove(board, col)) {
+                    legalMoves.push(col);
+                }
+            }
+            return legalMoves;
+        },   
         /* returns the lowest row index with a piece for given col */
         highestFilledRow: function(board, col) {
             var targetCol = board[col];
@@ -81,8 +90,8 @@ var Utils = (function() {
 
         /* returns the player who won, or false */
         checkWin: function(board) {
-            if(board === undefined || board[0] === undefined) return false;
-            
+            if(board === undefined || board[0] === undefined) return 'tie';
+
             var cols = board.length;
             var rows = board[0].length;
             var initFn = function() { return {cols:0, rows:0, diag_lr:0, diag_rl: 0}; };
@@ -95,6 +104,11 @@ var Utils = (function() {
                     }
                 }
             }
+            
+            if(Utils.findLegalMoves(board).length == 0) {
+                return 'tie';
+            }
+            
             return false;
         },
     };

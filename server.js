@@ -104,8 +104,11 @@ HumanPlayer.prototype.gameover = function(winner, loser, open) {
     else if (loser == this.playerIdx) {
         this.socket.emit("gameover", {msg: "You lose.", open: open});
     }
+    else if (winner == 'tie') {
+        this.socket.emit("gameover", {msg: "It's a tie.", open: open});
+    }
     else {
-        this.socket.emit('gameover', {msg: "Game over", open: open});
+        this.socket.emit('gameover', {msg: "Game over. Player " + winner + " wins.", open: open});
     }
 };
 
@@ -127,6 +130,7 @@ ComputerPlayer.prototype.join = function() {};
 ComputerPlayer.prototype.begin = function() {};
 ComputerPlayer.prototype.gameover = function() {};
 ComputerPlayer.prototype.leave = function() {};
+ComputerPlayer.prototype.joinSpectators = function() {};
 
 ComputerPlayer.prototype.move = function(msg, state) {  
     if(state.currentTurn == this.playerIdx) {
@@ -229,16 +233,9 @@ var removeBySocket = function(list, socket) {
 };
 
 var removeComputerPlayers = function(list) {
-    var toRemove = [];
-    for(var i=0; i<list.length; i++) {
-        if(list[i] instanceof ComputerPlayer) {
-            toRemove.push(i);
-        }
-    }
-    
-    for(var i=0; i<toRemove.length; i++) {
-        list.splice(toRemove[i], 1);
-    }
+    return list.filter(function(el, ix, arr) {
+        return !(el instanceof ComputerPlayer);
+    });
 };
 
 var isMyTurn = function(socket) {
@@ -266,40 +263,19 @@ var win = function() {
         return;
     }
 
-    var winner;
-    var loser;
-    if(currentGame.gameOver == 1) {
-        winner = player1;
-        loser = player2;
-    }
-    else if(currentGame.gameOver == 2) {
-        winner = player2;
-        loser = player1;
-    }
-
-    player1Socket = player1.socket;
-    player2Socket = player2.socket;
+    player1.joinSpectators();
+    player2.joinSpectators();
     
     player1 = undefined;
     player2 = undefined;
     
     var open = getOpenSlots();
 
-    if(winner && loser) {
-        for(var i=0; i<clients.length; i++) {
-            clients[i].gameover(currentGame.gameOver, Utils.otherPlayer(currentGame.gameOver), open);
-        }
+    for(var i=0; i<clients.length; i++) {
+        clients[i].gameover(currentGame.gameOver, Utils.otherPlayer(currentGame.gameOver), open);
     }
     
-    if(player1Socket) {
-        clients[indexBySocket(clients, player1Socket)].joinSpectators();
-    }
-    
-    if(player2Socket) {
-        clients[indexBySocket(clients, player2Socket)].joinSpectators();    
-    }
-    
-    removeComputerPlayers(clients);
+    clients = removeComputerPlayers(clients);
 };
     
 io.sockets.on('connection', function(socket) {

@@ -66,8 +66,8 @@ module.exports = {
         assert.eql([0,0], board[0][0]);
     },
     
-    'Check win on empty board returns false': function() {
-        assert.eql(false, Utils.checkWin([]));
+    'Check win on empty board returns a tie': function() {
+        assert.eql('tie', Utils.checkWin([]));
     },
     
     'Check win with 4 in a single column returns player who won': function() {
@@ -88,6 +88,11 @@ module.exports = {
     'Check win with 4 in a right-to-left diagonal returns player who won': function() {
         board = [[0,0,0,1],[0,0,1,0],[0,1,0,0],[1,0,0,0]];
         assert.eql(1, Utils.checkWin(board));
+    },
+    
+    'Check win on a full board returns a tie': function() {
+        board = [[1,1,1,2],[2,2,2,1]];
+        assert.eql('tie', Utils.checkWin(board));
     },
     
     /* Check all other tetrominos fail */

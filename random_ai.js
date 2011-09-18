@@ -6,18 +6,7 @@ exports.move = function(state) {
     return exports.moveDetail(state).col;
 };
 
-exports.moveDetail = function(state) {
-    var findLegalMoves = function(board) {
-        var legalMoves = [];
-        for(var col=0; col<board.length; col++) {
-            if(Utils.isLegalMove(board, col)) {
-                legalMoves.push(col);
-            }
-        }
-        
-        return legalMoves;
-    };
-    
+exports.moveDetail = function(state) {    
     var boardAfterMove = function(board, col, player) {
         var row = Utils.highestFilledRow(board, col) - 1;
         board[col][row] = player;
@@ -36,7 +25,8 @@ exports.moveDetail = function(state) {
         return legalMoves[Math.floor(Math.random() * legalMoves.length)];
     };
     
-    var legalMoves = findLegalMoves(state.board);
+    var legalMoves = Utils.findLegalMoves(state.board);
+    if(legalMoves.length == 0) { return { col: 'nothing legal' }; }
     
     var block;
     var win;
