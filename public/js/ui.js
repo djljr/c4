@@ -10,8 +10,8 @@ var UI = (function() {
     
     var spriteWidth = 80;
     var spriteHeight = 57;
-    var REFRESH_RATE = 33;
-    var pieceVelocity = 18;
+    var REFRESH_RATE = 30;
+    var pieceAcceleration = 0.02; // px/ms^2
     
     //ui state    
     var ui = {};
@@ -121,18 +121,41 @@ var UI = (function() {
             var bottomOfCol = move.row * spriteHeight;
                 
             var currentSprite = $("#move" + curPieceId);
-            var start = new Date().getTime()
-            $.playground().registerCallback(function() {
-                var newTop = parseInt(currentSprite.css("top")) + pieceSpeed;
+            var animStart = new Date().getTime();
+            var frameStart = new Date().getTime();
+            var posAndVelocity = {pos: -spriteHeight, velocity: 0};
+            
+            var average = function(a){
+                var r = {mean: 0, variance: 0, deviation: 0}, t = a.length;
+                for(var m, s = 0, l = t; l--; s += a[l]);
+                for(m = r.mean = s / t, l = t, s = 0; l--; s += Math.pow(a[l] - m, 2));
+                return r.deviation = Math.sqrt(r.variance = s / t), r;
+            }
+            var posdiffs = [];
+            var dts = [];
+            $.playground().registerCallback(function() { 
+                var frameEnd = new Date().getTime();
+                posAndVelocity = function(posAndVelocity, startTime, endTime) {
+                    var dt = endTime - startTime;
+                    dts.push(dt);
+                    var previous = posAndVelocity.pos;
+                    posAndVelocity.pos = posAndVelocity.pos + posAndVelocity.velocity + pieceAcceleration / 2 * (dt * dt);
+                    posdiffs.push(posAndVelocity.pos - previous);
+                    posAndVelocity.velocity = posAndVelocity.velocity + pieceAcceleration * dt;
+                    return posAndVelocity;
+                }(posAndVelocity, frameStart, frameEnd);
+                
+                frameStart = frameEnd;
+                var newTop = posAndVelocity.pos;
                 if(newTop < bottomOfCol) {
                     currentSprite.css("top", newTop);
                     return false;
                 }
                 else {
                     currentSprite.css("top", bottomOfCol);
-                    var end = (new Date().getTime() - start);
+                    var animEnd = (new Date().getTime() - animStart);
                     
-                    console.log("animation finished in: " + end + "ms");
+                    //console.log("animation finished in: " + animEnd + "ms, final velocity: " + posAndVelocity.velocity + ", avgMove: " + average(posdiffs).mean + ", avgDt: " + average(dts).mean + ", steps: " + dts.length);
                     return true;
                 }
                 
