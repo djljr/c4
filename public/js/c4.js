@@ -67,19 +67,9 @@ var Engine = (function(io) {
                 UI.dropPiece(data.game.lastMove);
                 Engine.game.turnIdx = data.game.currentTurn;
             });
-            socket.on('win', function(data) {
-                Engine.game.gameOn = false;
-                UI.showMsg(data.msg);
-                Engine.game.spectator = true;
-                showJoinButtons(data);
-            });
-            socket.on('lose', function(data) {
-                Engine.game.gameOn = false;
-                UI.showMsg(data.msg);
-                Engine.game.spectator = true;
-                showJoinButtons(data);
-            });
             socket.on('gameover', function(data) {
+                Engine.game.gameOn = false;
+                Engine.game.spectator = true;        
                 UI.showMsg(data.msg);
                 showJoinButtons(data);
             });

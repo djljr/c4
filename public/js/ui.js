@@ -30,10 +30,10 @@ var UI = (function() {
         return joinButton;
     };
 
-    var aiButton = function(socket, baseUrl, text) {
+    var aiButton = function(socket, player, baseUrl, text) {
         var aiButton = $("<button></button>");
         aiButton.click(function() {
-            socket.emit('ai', {player: 2, baseUrl: baseUrl});
+            socket.emit('ai', {player: player, baseUrl: baseUrl});
         });
         aiButton.text(text);
         return aiButton;
@@ -166,9 +166,12 @@ var UI = (function() {
             ui.joinButtonP2 = joinButton(socket, 2, "Join as Player 2");
             $("#controls").append(ui.joinButtonP2);
            
-            ui.AIRandom = aiButton(socket, 'http://localhost:3000/ai/random/move', 'Random AI Opponent');
-            $("#controls").append(ui.AIRandom);
-            
+            ui.AIRandom1 = aiButton(socket, 1, 'http://localhost:3000/ai/random/move', 'AI for Player 1');
+            $("#controls").append(ui.AIRandom1);
+
+            ui.AIRandom2 = aiButton(socket, 2, 'http://localhost:3000/ai/random/move', 'AI for Player 2');
+            $("#controls").append(ui.AIRandom2);
+                        
             ui.msgDiv = $("<div></div>");
             $("#controls").append(ui.msgDiv);
            
@@ -176,17 +179,21 @@ var UI = (function() {
         
         showJoinButtons: function(data) {
             if(data.open.player1) {
-                ui.joinButtonP1.show();        
+                ui.joinButtonP1.show();
+                ui.AIRandom1.show();     
             }
             else {
                 ui.joinButtonP1.hide(); 
+                ui.AIRandom1.hide();
             }
             
             if(data.open.player2) {
                 ui.joinButtonP2.show();
+                ui.AIRandom2.show();
             }
             else {
                 ui.joinButtonP2.hide();
+                ui.AIRandom2.hide();
             }    
         }
     }
