@@ -33,9 +33,14 @@ module.exports = {
 	    assert.eql({good: 1}, ai.moveDetail.bestMove(state));        
     },
     
-    'bestMove when we cant do anything to stop a win is some random legal move': function() {
-        var state = {board: [[0,2,2,2],[0,2,2,2]], currentTurn: 1};
-        assert.isDefined(ai.moveDetail.bestMove(state).random);        
+    'bestMove when we cant do anything to stop a win is some random blocking move': function() {
+        var state = {board: [[0,2,2,2],[0,2,2,2],[0,0,0,0]], currentTurn: 1};
+        assert.isDefined(ai.moveDetail.bestMove(state).lose);        
+    },
+    
+    'bestMove when we are double trapped is to block one of the wins': function() {
+        var state = {board: [[0,0,0,0,2,1],[0,0,0,0,1,1],[0,0,0,0,0,1],[0,2,1,2,1,2],[0,0,0,0,1,2]], currentTurn: 2};
+        assert.eql({lose: 2}, ai.moveDetail.bestMove(state));
     },
     
     'AI will win if it can': function() {
@@ -61,5 +66,10 @@ module.exports = {
     'AI will choose some legal square when there are no wins on the board with many legal moves': function() {
         var state = {board: [[1,2,1,2],[0,0,2,1],[0,1,1,2]], currentTurn: 2};
         assert.includes([1,2], ai.move(state));
+    },
+    
+    'AI will play a blocking square even if it is double trapped and will lose next turn': function() {
+        var state = {board: [[0,0,0,0,2,1],[0,0,0,0,1,1],[0,0,0,0,0,1],[0,2,1,2,1,2],[0,0,0,0,1,2]], currentTurn: 2};
+        assert.eql(2, ai.move(state));
     },
 };

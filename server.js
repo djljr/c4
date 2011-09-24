@@ -165,7 +165,6 @@ ComputerPlayer.prototype.makeRequest = function(state, callback) {
     
     var req = http.request(options, function(res) {
         res.on('data', function(data) {
-            console.log(data);        
             callback(JSON.parse(data));
         });
     });

@@ -32,11 +32,13 @@ exports.moveDetail = (function() {
 			var blockingMoves = [];
 			var legalMoves = Utils.findLegalMoves(state.board);			
 			var goodMoves = Utils.findLegalMoves(state.board);
+			var blockMoves = [];
 			for(var i=0; i<legalMoves.length; i++) {
 			    var board = AIUtils.boardAfterMove(state.board, legalMoves[i], state.currentTurn);
 			    var newState = {board: board, currentTurn: Utils.nextPlayer(state.currentTurn)};
 			    var winningMoves = this.checkMovesForWin(newState);
 			    if(winningMoves.length > 0) {
+			        blockMoves = blockMoves.concat(winningMoves);
 			        goodMoves.splice(goodMoves.indexOf(legalMoves[i]), 1);
 			        continue;
 			    }			    
@@ -44,6 +46,9 @@ exports.moveDetail = (function() {
 			
 			if(goodMoves.length > 0) {
 			    return {good: AIUtils.randomMove(goodMoves)};
+			}
+			else if(blockMoves.length > 0) {
+			    return {lose: AIUtils.randomMove(blockMoves)};
 			}
 			else {
 			    return {random: AIUtils.randomMove(legalMoves)};
@@ -57,7 +62,10 @@ exports.moveDetail = (function() {
                 moveDetail.col = moveDetail.win;
             }
             else if(moveDetail.good !== undefined) {
-                moveDetail.col = moveDetail.good
+                moveDetail.col = moveDetail.good;
+            }
+            else if(moveDetail.lose !== undefined) {
+                moveDetail.col = moveDetail.lose;
             }
             else {
                 moveDetail.col = moveDetail.random;
