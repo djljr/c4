@@ -280,7 +280,7 @@ var win = function() {
     var open = getOpenSlots();
 
     for(var i=0; i<clients.length; i++) {
-        clients[i].gameover(currentGame.gameOver, Utils.otherPlayer(currentGame.gameOver), open);
+        clients[i].gameover(currentGame.gameOver, Utils.nextPlayer(currentGame.gameOver), open);
     }
     
     clients = removeComputerPlayers(clients);

@@ -17,13 +17,13 @@ exports.moveDetail = function(state) {
     
     for(var i=0; i<legalMoves.length; i++) {
         // see if the move is a win for us
-        var board = AIUtils.boardAfterMove(AIUtils.copyBoard(state.board), legalMoves[i], state.currentTurn);
+        var board = AIUtils.boardAfterMove(state.board, legalMoves[i], state.currentTurn);
         if(Utils.checkWin(board) == state.currentTurn) {
             win = legalMoves[i];
         }
         
-        // see if the move 
-        var next = Utils.otherPlayer(state.currentTurn)
+        // see if any move is a win for the other player
+        var next = Utils.nextPlayer(state.currentTurn);
         board = AIUtils.boardAfterMove(AIUtils.copyBoard(state.board), legalMoves[i], next);
         if(Utils.checkWin(board) == next) {
             block = legalMoves[i];

@@ -2,6 +2,7 @@ var engine = require('../engine');
 var Utils = engine.Utils;
 
 exports.boardAfterMove = function(board, col, player) {
+    board = exports.copyBoard(board);
     var row = Utils.highestFilledRow(board, col) - 1;
     board[col][row] = player;
     return board;

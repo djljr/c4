@@ -4,58 +4,65 @@ var AIUtils = require('./aiutils');
 var Utils = engine.Utils;
 
 exports.move = function(state) {
-    return exports.moveDetail(state).col;
+    return exports.moveDetail.move(state).col;
 };
 
-exports.moveDetail = function(state) {
-    var bestMove = function(state, depth) {
-        var legalMoves = Utils.findLegalMoves(state.board);
-        if(legalMoves.length == 0) { return { col: 'nothing legal', badIdeas: []}; }    
-        if(depth >= 2) { return {badIdeas: []}; }
-        var win;
-        var block;
-        var badIdeas = [];
-        for(var i=0; i<legalMoves.length; i++) {
-            // see if the move is a win for us
-            var board = AIUtils.boardAfterMove(AIUtils.copyBoard(state.board), legalMoves[i], state.currentTurn);
-            if(Utils.checkWin(board) == state.currentTurn) {
-                win = legalMoves[i];
-            }
-            
-            // see if the move 
-            var next = Utils.otherPlayer(state.currentTurn)
-            board = AIUtils.boardAfterMove(AIUtils.copyBoard(state.board), legalMoves[i], next);
-            if(Utils.checkWin(board) == next) {
-                block = legalMoves[i];
-            }
-            
-            if(win === undefined && block === undefined) {
-                //check one more move
-                var theirTurn = bestMove({board: board, currentTurn: next}, depth+1);
-                badIdeas.push(legalMoves[i]);
-            }
-        }
-        
-        var goodMoves = legalMoves.filter(function(el, idx) {
-            return !(badIdeas.indexOf(el) > -1);
-        });
-        
-        return {win: win, block: block, badIdeas: badIdeas, goodMoves: goodMoves};
-    }
+exports.moveDetail = (function() {
+    return {
+	    checkMovesForWin: function(state) {
+			var legalMoves = Utils.findLegalMoves(state.board);
+			var winningMoves = [];
+			for(var i=0; i<legalMoves.length; i++) {
+			    var board = AIUtils.boardAfterMove(state.board, legalMoves[i], state.currentTurn);
+			    if(Utils.checkWin(board) == state.currentTurn) {
+			        winningMoves.push(legalMoves[i]);
+			    }
+			}
+			return winningMoves;
+		},
+
+	    bestMove: function(state) {
+			var winningMoves = this.checkMovesForWin(state);
+			if(winningMoves.length > 0) {
+			    var move = AIUtils.randomMove(winningMoves);
+       			return {win: move};
+			}
+			
+			
+			var blockingMoves = [];
+			var legalMoves = Utils.findLegalMoves(state.board);			
+			var goodMoves = Utils.findLegalMoves(state.board);
+			for(var i=0; i<legalMoves.length; i++) {
+			    var board = AIUtils.boardAfterMove(state.board, legalMoves[i], state.currentTurn);
+			    var newState = {board: board, currentTurn: Utils.nextPlayer(state.currentTurn)};
+			    var winningMoves = this.checkMovesForWin(newState);
+			    if(winningMoves.length > 0) {
+			        goodMoves.splice(goodMoves.indexOf(legalMoves[i]), 1);
+			        continue;
+			    }			    
+			}
+			
+			if(goodMoves.length > 0) {
+			    return {good: AIUtils.randomMove(goodMoves)};
+			}
+			else {
+			    return {random: AIUtils.randomMove(legalMoves)};
+			}
+		},
     
-    var moveDetail = bestMove(state, 0);
-    var randomMove = AIUtils.randomMove(moveDetail.goodMoves);
+        move: function(state) {
+            var moveDetail = this.bestMove(state);
     
-    if(moveDetail.win !== undefined) {
-        moveDetail.col = moveDetail.win;
-    }
-    else if(moveDetail.block !== undefined) {
-        moveDetail.col = moveDetail.block
-    }
-    else {
-        moveDetail.col = moveDetail.randomMove = randomMove;
-        
-    }
-    
-    return moveDetail;
-};
+            if(moveDetail.win !== undefined) {
+                moveDetail.col = moveDetail.win;
+            }
+            else if(moveDetail.good !== undefined) {
+                moveDetail.col = moveDetail.good
+            }
+            else {
+                moveDetail.col = moveDetail.random;
+            }
+            return moveDetail;
+        },
+    };
+})();

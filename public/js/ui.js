@@ -204,7 +204,7 @@ var UI = (function() {
             ui.AIRandom1 = aiButton(socket, 1, 'http://dl.no.de/ai/random/move', 'AI for Player 1');
             $("#controls").append(ui.AIRandom1);
 
-            ui.AIRandom2 = aiButton(socket, 2, 'http://dl.no.de/ai/random/move', 'AI for Player 2');
+            ui.AIRandom2 = aiButton(socket, 2, 'http://dl.no.de/ai/twostep/move', 'AI for Player 2');
             $("#controls").append(ui.AIRandom2);
                         
             ui.msgDiv = $("<div></div>");
