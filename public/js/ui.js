@@ -30,13 +30,20 @@ var UI = (function() {
         return joinButton;
     };
 
-    var aiButton = function(socket, player, baseUrl, text) {
+    var aiButton = function(socket, player, defaultBaseUrl, text) {
+	var aiContainer = $("<div></div>");
+	var aiUrl = $("<input></input>");
+	aiUrl.attr("size", "50");
+	aiUrl.val(defaultBaseUrl);
+
         var aiButton = $("<button></button>");
         aiButton.click(function() {
-            socket.emit('ai', {player: player, baseUrl: baseUrl});
+            socket.emit('ai', {player: player, baseUrl: aiUrl.val()});
         });
         aiButton.text(text);
-        return aiButton;
+
+	aiContainer.append(aiButton).append(aiUrl);
+        return aiContainer;
     };
     
     /* 
@@ -194,10 +201,10 @@ var UI = (function() {
             ui.joinButtonP2 = joinButton(socket, 2, "Join as Player 2");
             $("#controls").append(ui.joinButtonP2);
            
-            ui.AIRandom1 = aiButton(socket, 1, 'http://localhost:3000/ai/twostep/move', 'AI for Player 1');
+            ui.AIRandom1 = aiButton(socket, 1, 'http://dl.no.de/ai/random/move', 'AI for Player 1');
             $("#controls").append(ui.AIRandom1);
 
-            ui.AIRandom2 = aiButton(socket, 2, 'http://localhost:3000/ai/twostep/move', 'AI for Player 2');
+            ui.AIRandom2 = aiButton(socket, 2, 'http://dl.no.de/ai/random/move', 'AI for Player 2');
             $("#controls").append(ui.AIRandom2);
                         
             ui.msgDiv = $("<div></div>");
