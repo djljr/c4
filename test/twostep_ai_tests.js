@@ -1,4 +1,5 @@
-var ai = require('../ais/random_ai');
+var ai = require('../ais/twostep_ai');
+
 var assert = require('assert');
 
 module.exports = {
@@ -16,7 +17,7 @@ module.exports = {
         var state = {board: [[0,1,1,1],[0,2,2,2]], currentTurn: 2};
         assert.eql(1, ai.move(state));
     },
-    
+
     'AI will choose some legal square when there are no wins on the board and only one legal move': function() {
         var state = {board: [[1,2,1,2],[0,0,2,1]], currentTurn: 2};
         assert.eql(1, ai.move(state));
@@ -26,4 +27,5 @@ module.exports = {
         var state = {board: [[1,2,1,2],[0,0,2,1],[0,1,1,2]], currentTurn: 2};
         assert.includes([1,2], ai.move(state));
     },
-}
+        
+};

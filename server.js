@@ -11,7 +11,8 @@ var url = require('url');
 var c4engine = require('./engine');
 var Utils = c4engine.Utils;
 
-var randomAi = require('./random_ai');
+var randomAi = require('./ais/random_ai');
+var twoStepAi = require('./ais/twostep_ai');
 
 // Configuration
 
@@ -47,6 +48,12 @@ app.get('/', function(req, res){
 
 app.post('/ai/random/move', function(req, res) {
     var move = randomAi.move(req.body);
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({move: move}));
+});
+
+app.post('/ai/twostep/move', function(req, res) {
+    var move = twoStepAi.move(req.body);
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({move: move}));
 });
@@ -135,8 +142,8 @@ ComputerPlayer.prototype.joinSpectators = function() {};
 ComputerPlayer.prototype.move = function(msg, state) {  
     if(state.currentTurn == this.playerIdx) {
         var mc = this.moveCallback;
-        var callback = function(move) {
-            move = JSON.parse(move).move;
+        var callback = function(moveJson) {
+            var move = moveJson.move;
             mc(move);
         };
 
@@ -158,7 +165,8 @@ ComputerPlayer.prototype.makeRequest = function(state, callback) {
     
     var req = http.request(options, function(res) {
         res.on('data', function(data) {
-            callback(data);
+            console.log(data);        
+            callback(JSON.parse(data));
         });
     });
     
