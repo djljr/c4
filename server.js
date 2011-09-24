@@ -138,7 +138,13 @@ ComputerPlayer.prototype.begin = function() {};
 ComputerPlayer.prototype.gameover = function() {};
 ComputerPlayer.prototype.leave = function() {};
 ComputerPlayer.prototype.joinSpectators = function() {};
-
+ComputerPlayer.prototype.valid = function() {
+    if(this.moveUrl.hostname === undefined) {
+        return false;
+    }
+    
+    return true;
+};
 ComputerPlayer.prototype.move = function(msg, state) {  
     if(state.currentTurn == this.playerIdx) {
         var mc = this.moveCallback;
@@ -152,7 +158,7 @@ ComputerPlayer.prototype.move = function(msg, state) {
     }
 };
 
-ComputerPlayer.prototype.makeRequest = function(state, callback) { 
+ComputerPlayer.prototype.makeRequest = function(state, callback) {
     var options = {
         host: this.moveUrl.hostname,
         port: this.moveUrl.port,
@@ -162,7 +168,7 @@ ComputerPlayer.prototype.makeRequest = function(state, callback) {
         },
         method: 'POST'
     };
-    
+
     var req = http.request(options, function(res) {
         res.on('data', function(data) {
             callback(JSON.parse(data));
@@ -345,11 +351,21 @@ io.sockets.on('connection', function(socket) {
         var open = getOpenSlots();
         var computer;
         if(data.player == 1 && open.player1) {
-            computer = player1 = new ComputerPlayer(data.baseUrl, 1, moveCallback(1));
+            computer = new ComputerPlayer(data.baseUrl, 1, moveCallback(1));
+            if(!computer.valid()) {
+                socket.emit('error', { msg: "AI is not valid." });            
+                return;
+            }
+            player1 = computer;
             open.player1 = false;
         }
         else if(data.player == 2 && open.player2) {
-            computer = player2 = new ComputerPlayer(data.baseUrl, 2, moveCallback(2));       
+            computer = new ComputerPlayer(data.baseUrl, 2, moveCallback(2));
+            if(!computer.valid()) {
+                socket.emit('error', { msg: "AI is not valid." });            
+                return;
+            }        
+            player2 = computer;           
             open.player2 = false;
         }
         else {
