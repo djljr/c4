@@ -165,6 +165,7 @@ ComputerPlayer.prototype.makeRequest = function(state, callback) {
         path: this.moveUrl.pathname,
         headers: {
             'Content-Type': 'application/json'
+            'Content-Length': data.length
         },
         method: 'POST'
     };
