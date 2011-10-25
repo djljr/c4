@@ -159,6 +159,7 @@ ComputerPlayer.prototype.move = function(msg, state) {
 };
 
 ComputerPlayer.prototype.makeRequest = function(state, callback) {
+    var data = JSON.stringify(state);
     var options = {
         host: this.moveUrl.hostname,
         port: this.moveUrl.port,
@@ -176,7 +177,7 @@ ComputerPlayer.prototype.makeRequest = function(state, callback) {
         });
     });
     
-    req.end(JSON.stringify(state));
+    req.end(data);
 };
 
 ComputerPlayer.prototype.toString = function() {
