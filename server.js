@@ -164,7 +164,7 @@ ComputerPlayer.prototype.makeRequest = function(state, callback) {
         port: this.moveUrl.port,
         path: this.moveUrl.pathname,
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
             'Content-Length': data.length
         },
         method: 'POST'
