@@ -13,6 +13,7 @@ var Utils = c4engine.Utils;
 
 var randomAi = require('./ais/random_ai');
 var twoStepAi = require('./ais/twostep_ai');
+var replayAi = require('./ais/replay_ai');
 
 // Configuration
 
@@ -54,6 +55,12 @@ app.post('/ai/random/move', function(req, res) {
 
 app.post('/ai/twostep/move', function(req, res) {
     var move = twoStepAi.move(req.body);
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({move: move}));
+});
+
+app.post('/ai/replay/move', function(req, res) {
+    var move = replayAi.move(req.body, req.query['m'].split(','));
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({move: move}));
 });
@@ -104,19 +111,21 @@ HumanPlayer.prototype.makeMove = function(col) {
     this.moveCallback(col);
 };
 
-HumanPlayer.prototype.gameover = function(winner, loser, open) {
+HumanPlayer.prototype.gameover = function(winner, loser, open, moveList) {
+    var gameover = {moveList: moveList, open: open};
     if(winner == this.playerIdx) {
-        this.socket.emit("gameover", {msg: "You win!", open: open});
+        gameover.msg = "You win!";
     }
     else if (loser == this.playerIdx) {
-        this.socket.emit("gameover", {msg: "You lose.", open: open});
+        gameover.msg = "You lose.";
     }
     else if (winner == 'tie') {
-        this.socket.emit("gameover", {msg: "It's a tie.", open: open});
+        gameover.msg = "It's a tie.";    
     }
     else {
-        this.socket.emit('gameover', {msg: "Game over. Player " + winner + " wins.", open: open});
+        gameover.msg = "Game over. Player " + winner + " wins.";    
     }
+    this.socket.emit("gameover", gameover);
 };
 
 HumanPlayer.prototype.leave = function(msg, open) {
@@ -160,10 +169,15 @@ ComputerPlayer.prototype.move = function(msg, state) {
 
 ComputerPlayer.prototype.makeRequest = function(state, callback) {
     var data = JSON.stringify(state);
+    var path = this.moveUrl.pathname;
+    debugger;
+    if(this.moveUrl.search) {
+        path = path + this.moveUrl.search;
+    }
     var options = {
         host: this.moveUrl.hostname,
         port: this.moveUrl.port,
-        path: this.moveUrl.pathname,
+        path: path,
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': data.length
@@ -287,7 +301,7 @@ var win = function() {
     var open = getOpenSlots();
 
     for(var i=0; i<clients.length; i++) {
-        clients[i].gameover(currentGame.gameOver, Utils.nextPlayer(currentGame.gameOver), open);
+        clients[i].gameover(currentGame.gameOver, Utils.nextPlayer(currentGame.gameOver), open, currentGame.moveList);
     }
     
     clients = removeComputerPlayers(clients);

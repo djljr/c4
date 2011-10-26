@@ -31,10 +31,10 @@ var UI = (function() {
     };
 
     var aiButton = function(socket, player, defaultBaseUrl, text) {
-	var aiContainer = $("<div></div>");
-	var aiUrl = $("<input></input>");
-	aiUrl.attr("size", "50");
-	aiUrl.val(defaultBaseUrl);
+	    var aiContainer = $("<div></div>");
+	    var aiUrl = $("<input></input>");
+	    aiUrl.attr("size", "50");
+	    aiUrl.val(defaultBaseUrl);
 
         var aiButton = $("<button></button>");
         aiButton.click(function() {
@@ -42,7 +42,7 @@ var UI = (function() {
         });
         aiButton.text(text);
 
-	aiContainer.append(aiButton).append(aiUrl);
+	    aiContainer.append(aiButton).append(aiUrl);
         return aiContainer;
     };
     
@@ -75,6 +75,12 @@ var UI = (function() {
             if(msg && msg != "") {
                 ui.msgDiv.text(msg);
             }
+        },
+        
+        showInfo: function(msg) {
+            if(msg && msg != "") {
+                ui.infoDiv.text(msg);
+            }        
         },
 
         initBoard: function(rows, cols) {
@@ -209,6 +215,9 @@ var UI = (function() {
                         
             ui.msgDiv = $("<div></div>");
             $("#controls").append(ui.msgDiv);
+            
+            ui.infoDiv = $("<div></div>");
+            $("#controls").append(ui.infoDiv);
            
         },
         
