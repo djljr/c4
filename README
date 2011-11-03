@@ -2,8 +2,11 @@ Get and install node.js: http://nodejs.org/#download
 
 clone the repository.
 
+Install node dependencies with npm:
+$ npm install
+
 Running:
-$ node app.js
+$ node server.js
 
 Browse to:
 http://localhost:3000
