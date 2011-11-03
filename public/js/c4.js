@@ -72,6 +72,7 @@ var Engine = (function(io) {
                 Engine.game.gameOn = false;
                 Engine.game.spectator = true;        
                 UI.showMsg(data.msg);
+                UI.showInfo(JSON.stringify(data.moveList));
                 showJoinButtons(data);
             });
             

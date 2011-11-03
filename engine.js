@@ -136,6 +136,7 @@ var engine = {
         if(engine.gameOver) { return; }
         target = Utils.highestFilledRow(engine.board, col) - 1;
         if(target >= 0) {
+            engine.moveList[engine.moves] = col;
             engine.moves = engine.moves + 1;
             engine.board[col][target] = engine.turn;
             engine.lastMove = { row: target, col: col, player: engine.turn, moves: engine.moves };
@@ -152,6 +153,7 @@ var engine = {
         engine.ROWS = rows;
         engine.COLS = cols;
         engine.moves = 0;
+        engine.moveList = [];
         engine.gameOver = false;
         engine.lastMove = undefined;
         
